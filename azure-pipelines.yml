@@ -1,0 +1,29 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  branches:
+    include:
+    - '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- checkout: self
+  persistCredentials: true    #Allow scripts to access the system token
+  clean: true 
+
+- task: Bash@3
+  name: SyncRepo
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo $(GithubPAT)
+      git config --global user.email "gingy@wicresoft.com"
+      git config --global user.name "gingy"
+      git branch -r | grep -v '\->' | while read remote; do git branch --track "${remote#origin/}" "$remote"; done
+      git remote add forgit https://$(GithubPAT)@github.com/gingyuan/TestDevOpsSync.git
+      git branch -r | grep -v '\->' | while read remote; do git -c" push -u forgit "${remote#origin/}"; done
